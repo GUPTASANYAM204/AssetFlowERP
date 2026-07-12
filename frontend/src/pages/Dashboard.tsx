@@ -226,6 +226,7 @@ export const Dashboard: React.FC = () => {
   }
 
   const { kpi } = data;
+  const overdueReturnsList = data.overdueReturnsList ?? [];
   const recentActivity = isManager ? activityLogs : (data.recentActivity ?? []);
 
   return (
