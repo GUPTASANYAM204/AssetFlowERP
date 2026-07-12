@@ -103,9 +103,16 @@ export const AuditManagement: React.FC = () => {
     }
   };
 
-  const handleAuditorCheckSubmit = async (assetId: string, status: 'VERIFIED' | 'MISSING' | 'DAMAGED', notes: string = '') => {
+  const handleAuditorCheckSubmit = async (assetId: string, status: 'VERIFIED' | 'MISSING' | 'DAMAGED') => {
     if (!selectedCycleId) return;
     try {
+      let notes = '';
+      if (status === 'MISSING' || status === 'DAMAGED') {
+        const input = prompt(`Enter comments/location notes for status [${status}] (optional):`);
+        if (input === null) return; // User cancelled
+        notes = input;
+      }
+
       const res = await fetch('http://localhost:5001/api/audits/record', {
         method: 'POST',
         headers: {
@@ -130,6 +137,45 @@ export const AuditManagement: React.FC = () => {
     } catch (err: any) {
       alert(err.message);
     }
+  };
+
+  const handleDownloadDiscrepancyReport = () => {
+    if (!selectedCycleDetail || !selectedCycleDetail.records) return;
+    const discrepancies = selectedCycleDetail.records
+      .filter((r: any) => ['MISSING', 'DAMAGED'].includes(r.status))
+      .map((r: any) => ({
+        AssetTag: r.asset_tag,
+        AssetName: r.asset_name,
+        ExpectedLocation: r.expected_location || 'N/A',
+        Status: r.status,
+        Notes: r.notes || '',
+        AuditorName: r.auditor_name || 'N/A',
+        VerifiedAt: r.checked_at ? new Date(r.checked_at).toLocaleString() : 'N/A'
+      }));
+
+    if (discrepancies.length === 0) return;
+
+    // Create CSV headers
+    const headers = Object.keys(discrepancies[0]).join(',');
+    
+    // Create CSV rows
+    const rows = discrepancies.map((row: any) => {
+      return Object.values(row)
+        .map((value) => {
+          const str = String(value).replace(/"/g, '""');
+          return `"${str}"`;
+        })
+        .join(',');
+    });
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers, ...rows].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `discrepancy_report_${selectedCycleDetail.name.replace(/\s+/g, '_')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleCloseAuditCycle = async () => {
@@ -354,18 +400,26 @@ export const AuditManagement: React.FC = () => {
 
                 {/* ── Discrepancy Notice Block ── */}
                 {discrepanciesCount > 0 && (
-                  <div style={{
-                    backgroundColor: 'rgba(245, 158, 11, 0.08)',
-                    border: '1.5px solid #d97706',
-                    borderRadius: 'var(--radius-md)',
-                    padding: '12px 18px',
-                    color: '#f59e0b',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    marginBottom: 20,
-                    textAlign: 'center'
-                  }}>
-                    {discrepanciesCount} assets flagged - discrepancy report generated automatically
+                  <div 
+                    onClick={handleDownloadDiscrepancyReport}
+                    title="Click to download discrepancy CSV report"
+                    style={{
+                      backgroundColor: 'rgba(245, 158, 11, 0.08)',
+                      border: '1.5px solid #d97706',
+                      borderRadius: 'var(--radius-md)',
+                      padding: '12px 18px',
+                      color: '#f59e0b',
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      marginBottom: 20,
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      transition: 'background-color 0.2s'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(245, 158, 11, 0.15)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(245, 158, 11, 0.08)'; }}
+                  >
+                    {discrepanciesCount} assets flagged - discrepancy report generated automatically (Click to download)
                   </div>
                 )}
 
