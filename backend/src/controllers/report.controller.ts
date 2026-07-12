@@ -3,6 +3,8 @@ import { ReportService } from '../services/report.service';
 import { LogRepository } from '../repositories/log.repository';
 import { NotificationRepository } from '../repositories/notification.repository';
 import { authenticateJWT, requireRole, AuthenticatedRequest } from '../middleware/auth';
+import { validateRequest } from '../middleware/validation';
+import { logsQuerySchema } from '../validators/report.validator';
 import { broadcast } from '../websocket/server';
 
 const router = Router();
@@ -17,15 +19,22 @@ router.get('/analytics', authenticateJWT, async (req, res, next) => {
   }
 });
 
-// GET full activity logs (Admin / Asset Manager only)
-router.get('/logs', authenticateJWT, requireRole(['ADMIN', 'ASSET_MANAGER']), async (req, res, next) => {
-  try {
-    const list = await LogRepository.findAll();
-    res.json(list);
-  } catch (err) {
-    next(err);
+// GET paginated asset activity logs (Admin / Asset Manager only)
+router.get(
+  '/logs',
+  authenticateJWT,
+  requireRole(['ADMIN', 'ASSET_MANAGER']),
+  validateRequest({ query: logsQuerySchema }),
+  async (req, res, next) => {
+    try {
+      const { page, limit } = req.query as unknown as { page: number; limit: number };
+      const result = await LogRepository.findAssetActivityPaginated(page, limit);
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
   }
-});
+);
 
 // GET user notifications
 router.get('/notifications', authenticateJWT, async (req: AuthenticatedRequest, res, next) => {

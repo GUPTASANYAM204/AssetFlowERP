@@ -40,7 +40,7 @@ app.use('/api/maintenance', maintenanceRouter);
 app.use('/api/audits', auditRouter);
 app.use('/api/reports', reportRouter);
 
-// Root route — backend is API-only; UI is served by the frontend dev server
+// Root route
 app.get('/', (_req, res) => {
   res.json({
     name: 'AssetFlow Backend API',

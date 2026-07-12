@@ -2,45 +2,78 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import Header from '../components/Header';
+import Pagination, { type PaginationMeta } from '../components/Pagination';
 import { Bell, FileText, Check } from 'lucide-react';
+
+const LOGS_PAGE_SIZE = 10;
+
+const emptyPagination = (pageSize: number): PaginationMeta => ({
+  page: 1,
+  pageSize,
+  total: 0,
+  totalPages: 0,
+});
 
 export const NotificationsLogs: React.FC = () => {
   const { token, user } = useAuth();
   const { notifTrigger, showToast } = useSocket();
 
-  // Load Data
   const [notifications, setNotifications] = useState<any[]>([]);
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
+  const [logsPage, setLogsPage] = useState(1);
+  const [logsPagination, setLogsPagination] = useState<PaginationMeta>(emptyPagination(LOGS_PAGE_SIZE));
   const [loading, setLoading] = useState(true);
+  const [logsLoading, setLogsLoading] = useState(false);
 
-  const loadData = async () => {
+  const isManager = ['ADMIN', 'ASSET_MANAGER'].includes(user?.role ?? '');
+
+  const loadNotifications = async () => {
     if (!token) return;
+    const resNotifs = await fetch('http://localhost:5001/api/reports/notifications', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (resNotifs.ok) setNotifications(await resNotifs.json());
+  };
+
+  const loadActivityLogs = async (page: number) => {
+    if (!token || !isManager) return;
     try {
-      setLoading(true);
-      // 1. Fetch user notifications
-      const resNotifs = await fetch('http://localhost:5001/api/reports/notifications', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (resNotifs.ok) setNotifications(await resNotifs.json());
-
-      // 2. Fetch full activity logs (if allowed)
-      if (['ADMIN', 'ASSET_MANAGER'].includes(user!.role)) {
-        const resLogs = await fetch('http://localhost:5001/api/reports/logs', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (resLogs.ok) setActivityLogs(await resLogs.json());
+      setLogsLoading(true);
+      const resLogs = await fetch(
+        `http://localhost:5001/api/reports/logs?page=${page}&limit=${LOGS_PAGE_SIZE}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (resLogs.ok) {
+        const data = await resLogs.json();
+        setActivityLogs(data.items ?? []);
+        setLogsPagination(data.pagination ?? emptyPagination(LOGS_PAGE_SIZE));
       }
-
     } catch (err) {
-      console.error('Error loading logs/notifications', err);
+      console.error('Error loading activity logs', err);
     } finally {
-      setLoading(false);
+      setLogsLoading(false);
     }
   };
 
   useEffect(() => {
-    loadData();
+    const init = async () => {
+      if (!token) return;
+      setLoading(true);
+      try {
+        await loadNotifications();
+      } catch (err) {
+        console.error('Error loading notifications', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    init();
   }, [token, notifTrigger]);
+
+  useEffect(() => {
+    if (!token || !isManager || loading) return;
+    loadActivityLogs(logsPage);
+  }, [token, isManager, loading, logsPage, notifTrigger]);
 
   const handleMarkAsRead = async () => {
     try {
@@ -50,7 +83,7 @@ export const NotificationsLogs: React.FC = () => {
       });
       if (res.ok) {
         showToast('Notifications marked as read');
-        loadData();
+        await loadNotifications();
       }
     } catch (err) {
       console.error('Failed to mark read', err);
@@ -64,8 +97,6 @@ export const NotificationsLogs: React.FC = () => {
       </div>
     );
   }
-
-  const isManager = ['ADMIN', 'ASSET_MANAGER'].includes(user!.role);
 
   return (
     <div className="main-content">
@@ -120,10 +151,19 @@ export const NotificationsLogs: React.FC = () => {
             <div className="table-card" style={{ padding: 24 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
                 <FileText size={20} style={{ color: 'var(--warning)' }} />
-                <span style={{ fontWeight: 700, fontSize: 16 }}>Organization Audit Log Trail</span>
+                <span style={{ fontWeight: 700, fontSize: 16 }}>Asset Activity Log Trail</span>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxHeight: 600, overflowY: 'auto', paddingRight: 8 }}>
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 12,
+                maxHeight: 600,
+                overflowY: 'auto',
+                paddingRight: 8,
+                opacity: logsLoading ? 0.6 : 1,
+                transition: 'opacity 0.15s',
+              }}>
                 {activityLogs.map((log) => (
                   <div key={log.id} style={{
                     padding: 12,
@@ -160,10 +200,16 @@ export const NotificationsLogs: React.FC = () => {
                     )}
                   </div>
                 ))}
-                {activityLogs.length === 0 && (
-                  <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 32 }}>No audit activity logs found.</div>
+                {!logsLoading && activityLogs.length === 0 && (
+                  <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 32 }}>No asset activity logs found.</div>
                 )}
               </div>
+
+              <Pagination
+                pagination={logsPagination}
+                onPageChange={setLogsPage}
+                loading={logsLoading}
+              />
             </div>
           )}
 

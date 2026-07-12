@@ -2,15 +2,33 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import Header from '../components/Header';
+import Pagination, { type PaginationMeta } from '../components/Pagination';
 import { Plus, Calendar, Wrench, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+
+const DASHBOARD_ACTIVITY_PAGE_SIZE = 5;
+
+const emptyPagination = (pageSize: number): PaginationMeta => ({
+  page: 1,
+  pageSize,
+  total: 0,
+  totalPages: 0,
+});
 
 export const Dashboard: React.FC = () => {
   const { token, user } = useAuth();
   const { kpiTrigger, showToast } = useSocket();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [activityLogs, setActivityLogs] = useState<any[]>([]);
+  const [activityPage, setActivityPage] = useState(1);
+  const [activityPagination, setActivityPagination] = useState<PaginationMeta>(
+    emptyPagination(DASHBOARD_ACTIVITY_PAGE_SIZE)
+  );
+  const [activityLoading, setActivityLoading] = useState(false);
   const navigate = useNavigate();
+
+  const isManager = ['ADMIN', 'ASSET_MANAGER'].includes(user?.role ?? '');
 
   // Quick Action Modal states
   const [showAssetModal, setShowAssetModal] = useState(false);
@@ -44,6 +62,26 @@ export const Dashboard: React.FC = () => {
     }
   };
 
+  const fetchActivityLogs = async (page: number) => {
+    if (!token || !isManager) return;
+    try {
+      setActivityLoading(true);
+      const res = await fetch(
+        `http://localhost:5001/api/reports/logs?page=${page}&limit=${DASHBOARD_ACTIVITY_PAGE_SIZE}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (res.ok) {
+        const result = await res.json();
+        setActivityLogs(result.items ?? []);
+        setActivityPagination(result.pagination ?? emptyPagination(DASHBOARD_ACTIVITY_PAGE_SIZE));
+      }
+    } catch (err) {
+      console.error('Error fetching activity logs', err);
+    } finally {
+      setActivityLoading(false);
+    }
+  };
+
   const fetchFormOptions = async () => {
     if (!token) return;
     try {
@@ -70,6 +108,12 @@ export const Dashboard: React.FC = () => {
   useEffect(() => {
     fetchDashboardData();
   }, [token, kpiTrigger]);
+
+  useEffect(() => {
+    if (!loading && isManager) {
+      fetchActivityLogs(activityPage);
+    }
+  }, [loading, isManager, activityPage, token, kpiTrigger]);
 
   useEffect(() => {
     if (token) fetchFormOptions();
@@ -158,7 +202,8 @@ export const Dashboard: React.FC = () => {
     );
   }
 
-  const { kpi, recentActivity } = data;
+  const { kpi } = data;
+  const recentActivity = isManager ? activityLogs : (data.recentActivity ?? []);
 
   return (
     <div className="main-content">
@@ -240,12 +285,12 @@ export const Dashboard: React.FC = () => {
         {/* Recent Activity Table */}
         <div className="table-card">
           <div className="table-header">
-            <span style={{ fontWeight: 700, fontSize: 16 }}>Recent Operational Audit Trail</span>
+            <span style={{ fontWeight: 700, fontSize: 16 }}>Recent Asset Activity</span>
             <button className="btn btn-secondary" style={{ padding: '8px 16px', fontSize: 12 }} onClick={() => navigate('/notifications')}>
               View Full Logs
             </button>
           </div>
-          <div className="table-wrapper">
+          <div className="table-wrapper" style={{ opacity: activityLoading ? 0.6 : 1, transition: 'opacity 0.15s' }}>
             <table className="app-table">
               <thead>
                 <tr>
@@ -268,7 +313,7 @@ export const Dashboard: React.FC = () => {
                     <td style={{ fontSize: 12, fontFamily: 'monospace', color: 'var(--text-muted)' }}>{log.target_id || 'N/A'}</td>
                   </tr>
                 ))}
-                {recentActivity.length === 0 && (
+                {!activityLoading && recentActivity.length === 0 && (
                   <tr>
                     <td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 32 }}>
                       No recent activities recorded.
@@ -278,6 +323,16 @@ export const Dashboard: React.FC = () => {
               </tbody>
             </table>
           </div>
+
+          {isManager && (
+            <div style={{ padding: '0 24px 24px' }}>
+              <Pagination
+                pagination={activityPagination}
+                onPageChange={setActivityPage}
+                loading={activityLoading}
+              />
+            </div>
+          )}
         </div>
 
       </div>
