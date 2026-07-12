@@ -131,21 +131,28 @@ export class AllocationService {
       throw { status: 404, message: 'Asset not found' };
     }
 
-    if (asset.status !== 'ALLOCATED') {
-      throw { status: 400, message: 'Asset is not currently allocated. You can allocate it directly.' };
+    if (asset.status !== 'ALLOCATED' && asset.status !== 'AVAILABLE') {
+      throw { status: 400, message: 'Asset is not in a requestable state' };
     }
 
-    // 2. Resolve current holders to verify the request parameters
-    const activeAlloc = await AllocationRepository.findActiveByAssetId(data.assetId);
-    if (!activeAlloc) {
-      throw { status: 400, message: 'Could not resolve current holding allocation' };
+    let fromUserId: string | null = null;
+    let fromDepartmentId: string | null = null;
+
+    if (asset.status === 'ALLOCATED') {
+      // 2. Resolve current holders to verify the request parameters
+      const activeAlloc = await AllocationRepository.findActiveByAssetId(data.assetId);
+      if (!activeAlloc) {
+        throw { status: 400, message: 'Could not resolve current holding allocation' };
+      }
+      fromUserId = activeAlloc.user_id;
+      fromDepartmentId = activeAlloc.department_id;
     }
 
     // 3. Create transfer request
     const request = await AllocationRepository.createTransferRequest({
       ...data,
-      fromUserId: activeAlloc.user_id,
-      fromDepartmentId: activeAlloc.department_id,
+      fromUserId,
+      fromDepartmentId,
       requestedBy: requesterId,
     });
 

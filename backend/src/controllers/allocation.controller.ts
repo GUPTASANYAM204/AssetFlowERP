@@ -7,8 +7,8 @@ import { allocateAssetSchema, returnAssetSchema, transferRequestSchema, approveT
 
 const router = Router();
 
-// GET active allocations (Admin / Asset Manager / Department Head)
-router.get('/', authenticateJWT, requireRole(['ADMIN', 'ASSET_MANAGER', 'DEPARTMENT_HEAD']), async (req, res, next) => {
+// GET active allocations (Admin / Asset Manager / Department Head / Employee)
+router.get('/', authenticateJWT, requireRole(['ADMIN', 'ASSET_MANAGER', 'DEPARTMENT_HEAD', 'EMPLOYEE']), async (req, res, next) => {
   try {
     // Run automatic overdue check first to ensure accurate dashboard counts on refetch!
     await AllocationService.flagOverdueAllocations();
@@ -56,8 +56,8 @@ router.post(
   }
 );
 
-// GET transfer requests (Admin / Asset Manager / Department Head)
-router.get('/transfers', authenticateJWT, requireRole(['ADMIN', 'ASSET_MANAGER', 'DEPARTMENT_HEAD']), async (req, res, next) => {
+// GET transfer requests (Admin / Asset Manager / Department Head / Employee)
+router.get('/transfers', authenticateJWT, requireRole(['ADMIN', 'ASSET_MANAGER', 'DEPARTMENT_HEAD', 'EMPLOYEE']), async (req, res, next) => {
   try {
     const list = await AllocationService.getTransferRequests();
     res.json(list);

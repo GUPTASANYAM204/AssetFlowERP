@@ -189,9 +189,31 @@ export class AssetRepository {
     `;
     const maintenance = await query(maintenanceSql, [assetId]);
 
+    // 3. Get transfer requests history
+    const transferSql = `
+      SELECT tr.*,
+             fu.name as from_user_name,
+             fd.name as from_department_name,
+             tu.name as to_user_name,
+             td.name as to_department_name,
+             rb.name as requested_by_name,
+             ab.name as approved_by_name
+      FROM transfer_requests tr
+      LEFT JOIN users fu ON tr.from_user_id = fu.id
+      LEFT JOIN departments fd ON tr.from_department_id = fd.id
+      LEFT JOIN users tu ON tr.to_user_id = tu.id
+      LEFT JOIN departments td ON tr.to_department_id = td.id
+      LEFT JOIN users rb ON tr.requested_by = rb.id
+      LEFT JOIN users ab ON tr.approved_by = ab.id
+      WHERE tr.asset_id = $1
+      ORDER BY tr.created_at DESC
+    `;
+    const transfers = await query(transferSql, [assetId]);
+
     return {
       allocations: allocations.rows,
       maintenance: maintenance.rows,
+      transfers: transfers.rows,
     };
   }
 
