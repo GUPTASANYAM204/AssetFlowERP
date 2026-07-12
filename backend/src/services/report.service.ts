@@ -122,6 +122,7 @@ export class ReportService {
 
     return {
       kpi: kpiSummary.rows[0],
+      overdueReturnsList: overdueReturnsList.rows,
       deptUtilization: deptUtilization.rows,
       lifecycleCounts: lifecycleCounts.rows,
       maintenanceFreq: maintenanceFreq.rows,

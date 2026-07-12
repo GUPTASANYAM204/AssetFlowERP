@@ -46,7 +46,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           }
 
           if (data.type === 'NOTIFICATIONS_UPDATE') {
-            if (data.payload.userId === user.id) {
+            if (user && data.payload.userId === user.id) {
               setNotifTrigger((prev) => prev + 1);
               showToast('You have a new unread notification alert.');
             }
