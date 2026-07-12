@@ -40,6 +40,27 @@ app.use('/api/maintenance', maintenanceRouter);
 app.use('/api/audits', auditRouter);
 app.use('/api/reports', reportRouter);
 
+// Root route — backend is API-only; UI is served by the frontend dev server
+app.get('/', (_req, res) => {
+  res.json({
+    name: 'AssetFlow Backend API',
+    status: 'running',
+    health: '/health',
+    websocket: '/ws',
+    frontend: 'http://localhost:5173',
+    api: {
+      auth: '/api/auth',
+      org: '/api/org',
+      assets: '/api/assets',
+      allocations: '/api/allocations',
+      bookings: '/api/bookings',
+      maintenance: '/api/maintenance',
+      audits: '/api/audits',
+      reports: '/api/reports',
+    },
+  });
+});
+
 // Health check (includes database connectivity)
 app.get('/health', async (req, res) => {
   try {
