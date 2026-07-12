@@ -30,7 +30,7 @@ router.get('/', authenticateJWT, async (req, res, next) => {
 router.post(
   '/',
   authenticateJWT,
-  requireRole(['ADMIN', 'ASSET_MANAGER']),
+  requireRole(['ADMIN', 'ASSET_MANAGER', 'EMPLOYEE', 'DEPARTMENT_HEAD']),
   validateRequest({ body: registerAssetSchema }),
   async (req: AuthenticatedRequest, res, next) => {
     try {

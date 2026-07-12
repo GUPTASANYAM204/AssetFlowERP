@@ -128,7 +128,10 @@ export const Dashboard: React.FC = () => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(assetForm),
+        body: JSON.stringify({
+          ...assetForm,
+          acquisitionDate: new Date().toISOString().split('T')[0]
+        }),
       });
 
       if (!res.ok) {
@@ -143,6 +146,7 @@ export const Dashboard: React.FC = () => {
       alert(err.message);
     }
   };
+
 
   const handleBookResourceSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -209,32 +213,6 @@ export const Dashboard: React.FC = () => {
     <div className="main-content">
       <Header title="Dashboard Overview" />
       <div className="page-body">
-        
-        {/* Overdue Return Notification Highlight */}
-        {kpi.overdue_returns > 0 && (
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            padding: '16px 24px',
-            backgroundColor: 'var(--danger-bg)',
-            border: '1px solid var(--danger-border)',
-            borderRadius: 'var(--radius-md)',
-            color: 'var(--danger)',
-            fontWeight: 600,
-            fontSize: 14,
-            marginBottom: 32
-          }}>
-            <AlertCircle size={20} />
-            <span>{kpi.overdue_returns} asset allocations are currently past their expected return date. Action required!</span>
-            <button 
-              onClick={() => navigate('/allocations')} 
-              style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--text-primary)', textDecoration: 'underline', cursor: 'pointer', fontWeight: 600 }}
-            >
-              Review Overdues
-            </button>
-          </div>
-        )}
 
         {/* KPI Grid */}
         <div className="kpi-grid">
@@ -268,11 +246,10 @@ export const Dashboard: React.FC = () => {
         <div className="action-strip">
           <span style={{ fontWeight: 600, fontSize: 15, color: 'var(--text-secondary)' }}>Quick Operations Panel</span>
           <div className="action-strip-buttons">
-            {['ADMIN', 'ASSET_MANAGER'].includes(user!.role) && (
-              <button className="btn btn-primary" onClick={() => setShowAssetModal(true)}>
-                <Plus size={16} /> Register Asset
-              </button>
-            )}
+            <button className="btn btn-primary" onClick={() => setShowAssetModal(true)}>
+              <Plus size={16} /> Register Asset
+            </button>
+
             <button className="btn btn-secondary" onClick={() => setShowBookingModal(true)}>
               <Calendar size={16} /> Book Resource
             </button>
@@ -281,6 +258,41 @@ export const Dashboard: React.FC = () => {
             </button>
           </div>
         </div>
+
+        {/* Overdue Return Item Tracking Table (Highlighted & Separate) */}
+        {overdueReturnsList && overdueReturnsList.length > 0 && (
+          <div className="table-card" style={{ border: '2px solid var(--danger)', boxShadow: '0 0 15px rgba(239, 68, 68, 0.2)', marginBottom: 32 }}>
+            <div className="table-header" style={{ borderBottom: '1px solid var(--danger-border)', padding: '16px 24px', display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontWeight: 700, fontSize: 16, color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <AlertCircle size={18} /> Overdue Return Item Tracking
+              </span>
+            </div>
+            <div className="table-wrapper">
+              <table className="app-table">
+                <thead>
+                  <tr>
+                    <th>Asset Tag</th>
+                    <th>Asset Name</th>
+                    <th>Assigned To</th>
+                    <th>Allocated At</th>
+                    <th>Expected Return Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {overdueReturnsList.map((item: any) => (
+                    <tr key={item.id}>
+                      <td style={{ fontWeight: 600, color: 'var(--danger)' }}>{item.asset_tag}</td>
+                      <td style={{ fontWeight: 600 }}>{item.asset_name}</td>
+                      <td>{item.user_name || item.department_name || 'N/A'}</td>
+                      <td style={{ color: 'var(--text-secondary)' }}>{new Date(item.allocated_at).toLocaleDateString()}</td>
+                      <td style={{ color: 'var(--danger)', fontWeight: 600 }}>{new Date(item.expected_return_at).toLocaleDateString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
         {/* Recent Activity Table */}
         <div className="table-card">
