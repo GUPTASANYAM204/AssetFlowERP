@@ -134,6 +134,7 @@ export const Maintenance: React.FC = () => {
   const assignedRequests = requests.filter(r => r.status === 'TECHNICIAN_ASSIGNED');
   const inProgressRequests = requests.filter(r => r.status === 'IN_PROGRESS');
   const resolvedRequests = requests.filter(r => r.status === 'RESOLVED');
+  const rejectedRequests = requests.filter(r => r.status === 'REJECTED');
 
   const renderPriorityBadge = (prio: string) => {
     switch (prio) {
@@ -307,6 +308,26 @@ export const Maintenance: React.FC = () => {
                 <div className="kanban-card-title">{r.asset_name}</div>
                 <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Cost: ${parseFloat(r.cost || 0).toLocaleString()}</div>
                 <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Notes: {r.resolution_notes}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* COLUMN 6: REJECTED */}
+          <div className="kanban-column">
+            <div className="kanban-column-title">
+              <span>Rejected</span>
+              <span className="count">{rejectedRequests.length}</span>
+            </div>
+
+            {rejectedRequests.map(r => (
+              <div key={r.id} className="kanban-card" style={{ opacity: 0.7, borderLeft: '3px solid var(--danger)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontFamily: 'monospace', fontSize: 12, fontWeight: 700 }}>{r.asset_tag}</span>
+                  <span className="badge badge-danger" style={{ fontSize: 9 }}>Rejected</span>
+                </div>
+                <div className="kanban-card-title">{r.asset_name}</div>
+                <div className="kanban-card-desc">{r.description}</div>
+                <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Raised by: {r.raised_by_name}</div>
               </div>
             ))}
           </div>

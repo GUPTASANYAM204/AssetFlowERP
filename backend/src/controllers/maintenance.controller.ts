@@ -6,8 +6,8 @@ import { raiseMaintenanceSchema, updateMaintenanceStatusSchema } from '../valida
 
 const router = Router();
 
-// GET all maintenance requests (Admin, Asset Manager, Department Head)
-router.get('/', authenticateJWT, requireRole(['ADMIN', 'ASSET_MANAGER', 'DEPARTMENT_HEAD']), async (req, res, next) => {
+// GET all maintenance requests (Admin, Asset Manager, Department Head, Employee)
+router.get('/', authenticateJWT, requireRole(['ADMIN', 'ASSET_MANAGER', 'DEPARTMENT_HEAD', 'EMPLOYEE']), async (req, res, next) => {
   try {
     const list = await MaintenanceService.getRequests();
     res.json(list);
