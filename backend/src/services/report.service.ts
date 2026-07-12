@@ -1,4 +1,5 @@
 import { query } from '../config/db';
+import { LogRepository } from '../repositories/log.repository';
 
 export class ReportService {
   static async getOrganizationAnalytics() {
@@ -89,15 +90,8 @@ export class ReportService {
     `;
     const upcomingMaintenance = await query(upcomingMaintenanceSql);
 
-    // 8. Recent activity logs feed (for dashboard)
-    const recentActivitySql = `
-      SELECT al.*, u.name as user_name
-      FROM activity_logs al
-      LEFT JOIN users u ON al.user_id = u.id
-      ORDER BY al.timestamp DESC
-      LIMIT 10
-    `;
-    const recentActivity = await query(recentActivitySql);
+    // 8. Recent asset activity feed (for dashboard)
+    const recentActivity = await LogRepository.findRecentAssetActivity(10);
 
     // 9. Dashboard KPIs Summary
     const kpiSql = `
@@ -135,8 +129,7 @@ export class ReportService {
       bookingHeatmap: bookingHeatmap.rows,
       retirementCandidates: retirementCandidates.rows,
       upcomingMaintenance: upcomingMaintenance.rows,
-      recentActivity: recentActivity.rows,
-      overdueReturnsList: overdueReturnsList.rows,
+      recentActivity,
     };
   }
 }

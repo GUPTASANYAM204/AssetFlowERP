@@ -31,15 +31,6 @@ export class AuthService {
       departmentId: departmentId || null,
     });
 
-    // Log the registration
-    await LogRepository.create({
-      userId: newUser.id,
-      action: 'SIGNUP',
-      targetTable: 'users',
-      targetId: newUser.id,
-      newValues: { name: newUser.name, email: newUser.email, role: 'EMPLOYEE' },
-    });
-
     return newUser;
   }
 
@@ -69,14 +60,6 @@ export class AuthService {
       JWT_SECRET,
       { expiresIn: '24h' }
     );
-
-    // Log login
-    await LogRepository.create({
-      userId: user.id,
-      action: 'LOGIN',
-      targetTable: 'users',
-      targetId: user.id,
-    });
 
     return {
       token,

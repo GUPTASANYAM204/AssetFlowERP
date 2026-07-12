@@ -73,4 +73,5 @@ INSERT INTO notifications (id, user_id, title, message, type, is_read, reference
 
 -- 14. Seed Activity Logs
 INSERT INTO activity_logs (user_id, action, target_table, target_id, previous_values, new_values) VALUES
-('22222222-2222-2222-2222-222222222221', 'ALLOCATE_ASSET', 'asset_allocations', '55555555-5555-5555-5555-555555555502', NULL, '{"asset_tag": "AF-0012", "user": "Employee", "status": "ACTIVE"}'::jsonb);
+('22222222-2222-2222-2222-222222222221', 'ALLOCATE_ASSET', 'asset_allocations', '55555555-5555-5555-5555-555555555502', NULL, '{"asset_tag": "AF-0012", "user": "Employee", "status": "ACTIVE"}'::jsonb),
+('22222222-2222-2222-2222-222222222222', 'BOOK_RESOURCE', 'resource_bookings', '77777777-7777-7777-7777-777777777701', NULL, '{"resource": "Conference Room B2", "start": "2026-07-12T09:00:00+05:30", "end": "2026-07-12T10:00:00+05:30"}'::jsonb);
