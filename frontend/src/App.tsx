@@ -10,7 +10,6 @@ import AssetDirectory from './pages/AssetDirectory';
 import AllocationTransfer from './pages/AllocationTransfer';
 import ResourceBooking from './pages/ResourceBooking';
 import Maintenance from './pages/Maintenance';
-import AuditManagement from './pages/AuditManagement';
 import Reports from './pages/Reports';
 import NotificationsLogs from './pages/NotificationsLogs';
 import './styles/index.css';
@@ -42,7 +41,6 @@ const AppContent: React.FC = () => {
               <Route path="/allocations" element={<PrivateRoute><AllocationTransfer /></PrivateRoute>} />
               <Route path="/bookings" element={<PrivateRoute><ResourceBooking /></PrivateRoute>} />
               <Route path="/maintenance" element={<PrivateRoute><Maintenance /></PrivateRoute>} />
-              <Route path="/audit" element={<PrivateRoute><AuditManagement /></PrivateRoute>} />
               <Route path="/reports" element={<PrivateRoute><Reports /></PrivateRoute>} />
               <Route path="/notifications" element={<PrivateRoute><NotificationsLogs /></PrivateRoute>} />
               <Route path="*" element={<Navigate to="/" replace />} />

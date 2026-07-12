@@ -59,11 +59,6 @@ export const Sidebar: React.FC = () => {
           <span>Maintenance</span>
         </NavLink>
 
-        <NavLink to="/audit" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
-          <ClipboardCheck size={18} />
-          <span>Asset Audit</span>
-        </NavLink>
-
         <NavLink to="/reports" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
           <BarChart3 size={18} />
           <span>Reports & Analytics</span>
