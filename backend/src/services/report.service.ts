@@ -131,7 +131,6 @@ export class ReportService {
       retirementCandidates: retirementCandidates.rows,
       upcomingMaintenance: upcomingMaintenance.rows,
       recentActivity,
-      overdueReturnsList: overdueReturnsList.rows,
     };
   }
 }
