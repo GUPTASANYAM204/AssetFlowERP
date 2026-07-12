@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useOptionalSocket } from '../context/SocketContext';
 import { LayoutDashboard } from 'lucide-react';
 
 export const Login: React.FC = () => {
@@ -13,27 +14,37 @@ export const Login: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const fallbackDepartments = [
-    { id: '11111111-1111-1111-1111-111111111111', name: 'Engineering' },
-    { id: '11111111-1111-1111-1111-111111111112', name: 'Facilities' },
-    { id: '11111111-1111-1111-1111-111111111113', name: 'Operations' },
-  ];
+  // No hardcoded fallback departments — prefer empty list so invalid IDs aren't sent
+  const fallbackDepartments: any[] = [];
 
-  useEffect(() => {
-    const fetchDepts = async () => {
-      try {
-        const res = await fetch('http://localhost:5001/api/auth/departments');
-        if (res.ok) {
-          setDepartments(await res.json());
-        } else {
-          setDepartments(fallbackDepartments);
-        }
-      } catch {
+  const socket = useOptionalSocket();
+  const kpiTrigger = socket?.kpiTrigger;
+
+  const fetchDepts = async () => {
+    try {
+      const res = await fetch('http://localhost:5001/api/auth/departments');
+      if (res.ok) {
+        setDepartments(await res.json());
+      } else {
         setDepartments(fallbackDepartments);
       }
-    };
+    } catch {
+      setDepartments(fallbackDepartments);
+    }
+  };
+
+  useEffect(() => {
     fetchDepts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Refresh department list when KPI updates are broadcast (e.g., department created/updated)
+  useEffect(() => {
+    if (typeof kpiTrigger === 'number' && kpiTrigger > 0) {
+      fetchDepts();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [kpiTrigger]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -132,6 +143,12 @@ export const Login: React.FC = () => {
                   </option>
                 ))}
               </select>
+              {departments.length === 0 && (
+                <div style={{ marginTop: 8, fontSize: 13, color: 'var(--text-secondary)', display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <span>No departments available.</span>
+                  <button type="button" className="btn" onClick={fetchDepts} style={{ padding: '4px 8px', fontSize: 12 }}>Retry</button>
+                </div>
+              )}
             </div>
           )}
 

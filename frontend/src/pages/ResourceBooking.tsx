@@ -18,8 +18,11 @@ export const ResourceBooking: React.FC = () => {
   const [showBookModal, setShowBookModal] = useState(false);
   const [assetId, setAssetId] = useState('');
   const [bookedForDeptId, setBookedForDeptId] = useState('');
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
+  // Date and optional time fields (time always optional)
+  const [startDate, setStartDate] = useState(''); // YYYY-MM-DD
+  const [endDate, setEndDate] = useState('');
+  const [startTimeOptional, setStartTimeOptional] = useState(''); // HH:MM
+  const [endTimeOptional, setEndTimeOptional] = useState(''); // HH:MM
 
   // Selected Resource timeline list
   const [selectedAssetForTimeline, setSelectedAssetForTimeline] = useState('All');
@@ -63,11 +66,31 @@ export const ResourceBooking: React.FC = () => {
   const handleBookSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const localDateTimeISO = (dateStr: string, timeStr?: string, endOfDay = false) => {
+        // dateStr expected YYYY-MM-DD, timeStr expected HH:MM
+        const [y, m, d] = dateStr.split('-').map((v) => parseInt(v, 10));
+        let hh = 0;
+        let mm = 0;
+        if (timeStr) {
+          const parts = timeStr.split(':').map((v) => parseInt(v, 10));
+          hh = parts[0] || 0;
+          mm = parts[1] || 0;
+        } else if (endOfDay) {
+          hh = 23; mm = 59;
+        }
+        const dt = new Date(y, m - 1, d, hh, mm, endOfDay && !timeStr ? 59 : 0);
+        return dt.toISOString();
+      };
+
+      // Build payload: require dates but time fields optional — server expects ISO strings
+      const payloadStart = localDateTimeISO(startDate, startTimeOptional, false);
+      const payloadEnd = localDateTimeISO(endDate, endTimeOptional, true);
+
       const payload = {
         assetId,
         bookedForDepartmentId: bookedForDeptId || null,
-        startTime,
-        endTime,
+        startTime: payloadStart,
+        endTime: payloadEnd,
       };
 
       const res = await fetch('http://localhost:5001/api/bookings', {
@@ -88,8 +111,10 @@ export const ResourceBooking: React.FC = () => {
       setShowBookModal(false);
       setAssetId('');
       setBookedForDeptId('');
-      setStartTime('');
-      setEndTime('');
+      setStartDate('');
+      setEndDate('');
+      setStartTimeOptional('');
+      setEndTimeOptional('');
       loadData();
     } catch (err: any) {
       alert(err.message);
@@ -296,24 +321,46 @@ export const ResourceBooking: React.FC = () => {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Start Date & Time</label>
-                  <input 
-                    type="datetime-local" 
-                    className="form-control" 
-                    value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
+                  <label className="form-label">Start Date</label>
+                  <input
+                    type="date"
+                    className="form-control"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
                     required
                   />
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">End Date & Time</label>
-                  <input 
-                    type="datetime-local" 
-                    className="form-control" 
-                    value={endTime}
-                    onChange={(e) => setEndTime(e.target.value)}
+                  <label className="form-label">Start Time (optional)</label>
+                  <input
+                    type="time"
+                    className="form-control"
+                    value={startTimeOptional}
+                    onChange={(e) => setStartTimeOptional(e.target.value)}
+                    placeholder="HH:MM"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">End Date</label>
+                  <input
+                    type="date"
+                    className="form-control"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
                     required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">End Time (optional)</label>
+                  <input
+                    type="time"
+                    className="form-control"
+                    value={endTimeOptional}
+                    onChange={(e) => setEndTimeOptional(e.target.value)}
+                    placeholder="HH:MM"
                   />
                 </div>
               </div>

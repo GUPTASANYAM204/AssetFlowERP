@@ -72,6 +72,14 @@ export const OrgSetup: React.FC = () => {
         : 'http://localhost:5001/api/org/departments';
       
       const method = editDeptId ? 'PUT' : 'POST';
+      
+      // Normalize empty strings to null for optional UUID fields
+      const payload: any = {
+        name: deptForm.name,
+        status: deptForm.status,
+        headId: deptForm.headId && deptForm.headId.trim() !== '' ? deptForm.headId : null,
+        parentDepartmentId: deptForm.parentDepartmentId && deptForm.parentDepartmentId.trim() !== '' ? deptForm.parentDepartmentId : null,
+      };
 
       const res = await fetch(url, {
         method,
@@ -79,7 +87,7 @@ export const OrgSetup: React.FC = () => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(deptForm),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {

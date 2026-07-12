@@ -24,11 +24,6 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   useEffect(() => {
-    if (!token || !user) {
-      setConnected(false);
-      return;
-    }
-
     let ws: WebSocket;
     let reconnectTimeout: any;
 
@@ -37,7 +32,9 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       ws.onopen = () => {
         setConnected(true);
-        ws.send(JSON.stringify({ type: 'auth', token }));
+        if (token) {
+          ws.send(JSON.stringify({ type: 'auth', token }));
+        }
       };
 
       ws.onmessage = (event) => {
@@ -97,4 +94,13 @@ export const useSocket = () => {
     throw new Error('useSocket must be used within a SocketProvider');
   }
   return context;
+};
+
+// Safe optional accessor — returns undefined when not inside a provider.
+export const useOptionalSocket = () => {
+  try {
+    return useSocket();
+  } catch {
+    return undefined;
+  }
 };

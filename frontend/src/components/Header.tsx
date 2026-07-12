@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
-import { Bell, Wifi, WifiOff } from 'lucide-react';
+import { Bell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface HeaderProps {
@@ -10,7 +10,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ title }) => {
   const { token } = useAuth();
-  const { connected, notifTrigger } = useSocket();
+  const { notifTrigger } = useSocket();
   const [unreadCount, setUnreadCount] = useState(0);
   const navigate = useNavigate();
 
@@ -38,12 +38,7 @@ export const Header: React.FC<HeaderProps> = ({ title }) => {
       <h1 className="page-title">{title}</h1>
 
       <div className="header-actions">
-        {/* Real-time sync status indicator */}
-        <div className={`ws-status ${connected ? 'connected' : 'disconnected'}`}>
-          {connected ? <Wifi size={14} style={{ color: 'var(--success)' }} /> : <WifiOff size={14} style={{ color: 'var(--danger)' }} />}
-          <span className="indicator" />
-          <span>{connected ? 'Sync Connected' : 'Sync Disconnected'}</span>
-        </div>
+        {/* real-time sync indicator removed */}
 
         {/* Notifications bell */}
         <div className="notification-bell" onClick={() => navigate('/notifications')}>

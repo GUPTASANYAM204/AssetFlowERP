@@ -17,7 +17,7 @@ INSERT INTO departments (id, name, parent_department_id, status) VALUES
 
 -- 3. Insert Users (Seeded passwords are 'password123')
 INSERT INTO users (id, name, email, password_hash, role_id, department_id, status) VALUES
-('22222222-2222-2222-2222-222222222221', 'Aditi Rao', 'admin@company.com', '$2a$10$zRcuC6L/8lM5B1hR9cRDuO5P5QW6Lq2C.N3s8J2O/eQ2e577o0W82', '00000000-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', 'ACTIVE'),
+('22222222-2222-2222-2222-222222222221', 'Arushi', 'arushi.admin@gmail.com', '$2a$10$zRcuC6L/8lM5B1hR9cRDuO5P5QW6Lq2C.N3s8J2O/eQ2e577o0W82', '00000000-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', 'ACTIVE'),
 ('22222222-2222-2222-2222-222222222222', 'Rohan Mehta', 'manager@company.com', '$2a$10$zRcuC6L/8lM5B1hR9cRDuO5P5QW6Lq2C.N3s8J2O/eQ2e577o0W82', '00000000-0000-0000-0000-000000000004', '11111111-1111-1111-1111-111111111111', 'ACTIVE');
 
 -- Link head_id for departments
