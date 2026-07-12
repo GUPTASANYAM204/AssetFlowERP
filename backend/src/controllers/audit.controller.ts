@@ -7,8 +7,8 @@ import { createAuditCycleSchema, recordAuditSchema } from '../validators/audit.v
 
 const router = Router();
 
-// GET all audit cycles (Admin, Asset Manager, Department Head)
-router.get('/', authenticateJWT, requireRole(['ADMIN', 'ASSET_MANAGER', 'DEPARTMENT_HEAD']), async (req, res, next) => {
+// GET all audit cycles (Admin, Asset Manager, Department Head, Employee)
+router.get('/', authenticateJWT, requireRole(['ADMIN', 'ASSET_MANAGER', 'DEPARTMENT_HEAD', 'EMPLOYEE']), async (req, res, next) => {
   try {
     const list = await AuditService.getCycles();
     res.json(list);

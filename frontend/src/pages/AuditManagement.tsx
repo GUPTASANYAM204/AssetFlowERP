@@ -231,98 +231,109 @@ export const AuditManagement: React.FC = () => {
             {selectedCycleDetail ? (
               <div className="table-card" style={{ padding: 24 }}>
                 
-                {/* Active Cycle Control Panel */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: 16, marginBottom: 20 }}>
-                  <div>
-                    <h3 style={{ fontSize: 18, fontWeight: 700 }}>{selectedCycleDetail.name}</h3>
-                    <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4 }}>
-                      Auditors: {selectedCycleDetail.auditors.map((a: any) => a.name).join(', ')}
-                    </p>
-                  </div>
-                  {selectedCycleDetail.status === 'ACTIVE' && ['ADMIN', 'ASSET_MANAGER'].includes(user!.role) && (
-                    <button className="btn btn-danger" style={{ padding: '8px 16px', fontSize: 12 }} onClick={handleCloseAuditCycle}>
-                      Close Audit Cycle & Lock
-                    </button>
-                  )}
-                </div>
-
-                {/* Scope Summary */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 24, backgroundColor: 'var(--bg-tertiary)', padding: 12, borderRadius: 6, border: '1px solid var(--border-color)', fontSize: 13 }}>
-                  <div>
-                    <div style={{ color: 'var(--text-secondary)', fontSize: 11 }}>DEPARTMENT SCOPE</div>
-                    <strong>{selectedCycleDetail.department_name || 'All'}</strong>
-                  </div>
-                  <div>
-                    <div style={{ color: 'var(--text-secondary)', fontSize: 11 }}>LOCATION SCOPE</div>
-                    <strong>{selectedCycleDetail.scope_location || 'All'}</strong>
-                  </div>
-                  <div>
-                    <div style={{ color: 'var(--text-secondary)', fontSize: 11 }}>FLAGGED DISCREPANCIES</div>
-                    <strong style={{ color: discrepanciesCount > 0 ? 'var(--danger)' : 'var(--success)' }}>
-                      {discrepanciesCount} Anomalies
-                    </strong>
-                  </div>
+                {/* ── Active Cycle Header Block ── */}
+                <div style={{ 
+                  backgroundColor: '#2e2525', 
+                  border: '1.5px solid #4a3b3b', 
+                  borderRadius: 'var(--radius-md)', 
+                  padding: '16px 20px', 
+                  marginBottom: 24 
+                }}>
+                  <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: '#f3f4f6' }}>
+                    {selectedCycleDetail.name}
+                  </h3>
+                  <p style={{ fontSize: 12, color: '#9ca3af', margin: '4px 0 0 0' }}>
+                    Auditors: {selectedCycleDetail.auditors.map((a: any) => a.name).join(', ')}
+                  </p>
                 </div>
 
                 {/* Checklist Table */}
-                <span style={{ fontWeight: 700, fontSize: 14, display: 'block', marginBottom: 12 }}>Checklist Directory</span>
-                <div className="table-wrapper" style={{ border: '1px solid var(--border-color)', borderRadius: 6 }}>
+                <div className="table-wrapper" style={{ border: '1px solid var(--border-color)', borderRadius: 6, marginBottom: 20 }}>
                   <table className="app-table">
                     <thead>
                       <tr>
-                        <th>Tag</th>
-                        <th>Asset Name</th>
-                        <th>Expected Location</th>
-                        <th>Current State</th>
-                        <th>Auditor Verification Status</th>
+                        <th>Asset</th>
+                        <th>Expected location</th>
+                        <th style={{ textAlign: 'center' }}>Verification</th>
                       </tr>
                     </thead>
                     <tbody>
                       {selectedCycleDetail.records?.map((record: any) => {
                         const isCycleActive = selectedCycleDetail.status === 'ACTIVE';
-                        // Check if current user is an assigned auditor (or admin)
-                        const isAssignedAuditor = selectedCycleDetail.auditors.some((a: any) => a.id === user!.id) || user!.role === 'ADMIN';
+                        const isAssignedAuditor = selectedCycleDetail.auditors.some((a: any) => a.id === user!.id) || ['ADMIN', 'ASSET_MANAGER'].includes(user!.role);
+
+                        const btnBase = {
+                          padding: '6px 16px',
+                          fontSize: '12px',
+                          borderRadius: '20px',
+                          cursor: isCycleActive && isAssignedAuditor ? 'pointer' : 'default',
+                          transition: 'all 0.2s',
+                          fontWeight: 600,
+                          textAlign: 'center' as const,
+                          display: 'inline-block',
+                          borderWidth: '1.5px',
+                          borderStyle: 'solid'
+                        };
+
+                        const getBtnStyle = (btnStatus: 'VERIFIED' | 'MISSING' | 'DAMAGED') => {
+                          const active = record.status === btnStatus;
+                          if (btnStatus === 'VERIFIED') {
+                            return active
+                              ? { ...btnBase, borderColor: '#22c55e', color: '#22c55e', backgroundColor: 'rgba(34, 197, 94, 0.15)' }
+                              : { ...btnBase, borderColor: 'var(--border-color)', color: 'var(--text-secondary)', backgroundColor: 'transparent' };
+                          } else if (btnStatus === 'MISSING') {
+                            return active
+                              ? { ...btnBase, borderColor: '#ef4444', color: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.15)' }
+                              : { ...btnBase, borderColor: 'var(--border-color)', color: 'var(--text-secondary)', backgroundColor: 'transparent' };
+                          } else {
+                            return active
+                              ? { ...btnBase, borderColor: '#f97316', color: '#f97316', backgroundColor: 'rgba(249, 115, 22, 0.15)' }
+                              : { ...btnBase, borderColor: 'var(--border-color)', color: 'var(--text-secondary)', backgroundColor: 'transparent' };
+                          }
+                        };
 
                         return (
-                          <tr key={record.id}>
-                            <td style={{ fontFamily: 'monospace', fontWeight: 700 }}>{record.asset_tag}</td>
-                            <td style={{ fontWeight: 600 }}>{record.asset_name}</td>
-                            <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{record.expected_location}</td>
-                            <td>
-                              <span className="badge badge-info">{record.asset_status}</span>
+                          <tr key={record.asset_id}>
+                            <td style={{ fontWeight: 600 }}>
+                              <span style={{ fontFamily: 'monospace', fontWeight: 700, marginRight: 8, color: 'var(--accent-primary)' }}>
+                                {record.asset_tag}
+                              </span>
+                              {record.asset_name}
                             </td>
-                            <td>
+                            <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                              {record.expected_location || 'N/A'}
+                            </td>
+                            <td style={{ textAlign: 'center' }}>
                               {isCycleActive && isAssignedAuditor ? (
-                                <div style={{ display: 'flex', gap: 6 }}>
+                                <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
                                   <button 
-                                    className={`btn ${record.status === 'VERIFIED' ? 'btn-primary' : 'btn-secondary'}`} 
-                                    style={{ padding: '4px 8px', fontSize: 10 }}
+                                    style={getBtnStyle('VERIFIED')}
                                     onClick={() => handleAuditorCheckSubmit(record.asset_id, 'VERIFIED')}
                                   >
                                     Verified
                                   </button>
                                   <button 
-                                    className={`btn ${record.status === 'MISSING' ? 'btn-danger' : 'btn-secondary'}`} 
-                                    style={{ padding: '4px 8px', fontSize: 10 }}
+                                    style={getBtnStyle('MISSING')}
                                     onClick={() => handleAuditorCheckSubmit(record.asset_id, 'MISSING')}
                                   >
                                     Missing
                                   </button>
                                   <button 
-                                    className={`btn ${record.status === 'DAMAGED' ? 'btn-danger' : 'btn-secondary'}`} 
-                                    style={{ padding: '4px 8px', fontSize: 10 }}
+                                    style={getBtnStyle('DAMAGED')}
                                     onClick={() => handleAuditorCheckSubmit(record.asset_id, 'DAMAGED')}
                                   >
                                     Damaged
                                   </button>
                                 </div>
                               ) : (
-                                <div>
-                                  <span className={`badge ${
-                                    record.status === 'VERIFIED' ? 'badge-success' : 'badge-danger'
-                                  }`}>{record.status || 'UNCHECKED'}</span>
-                                  {record.notes && <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 4 }}>Note: {record.notes}</div>}
-                                </div>
+                                <span className={`badge ${
+                                  record.status === 'VERIFIED' ? 'badge-success' :
+                                  record.status === 'MISSING' ? 'badge-danger' :
+                                  record.status === 'DAMAGED' ? 'badge-warning' :
+                                  'badge-secondary'
+                                }`}>
+                                  {record.status || 'UNCHECKED'}
+                                </span>
                               )}
                             </td>
                           </tr>
@@ -330,7 +341,7 @@ export const AuditManagement: React.FC = () => {
                       })}
                       {(!selectedCycleDetail.records || selectedCycleDetail.records.length === 0) && (
                         <tr>
-                          <td colSpan={5} style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)' }}>
+                          <td colSpan={3} style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)' }}>
                             No assets fall within this cycle's scope parameters.
                           </td>
                         </tr>
@@ -338,6 +349,41 @@ export const AuditManagement: React.FC = () => {
                     </tbody>
                   </table>
                 </div>
+
+                <hr style={{ border: 'none', borderTop: '1px solid var(--border-color)', margin: '24px 0' }} />
+
+                {/* ── Discrepancy Notice Block ── */}
+                {discrepanciesCount > 0 && (
+                  <div style={{
+                    backgroundColor: 'rgba(245, 158, 11, 0.08)',
+                    border: '1.5px solid #d97706',
+                    borderRadius: 'var(--radius-md)',
+                    padding: '12px 18px',
+                    color: '#f59e0b',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    marginBottom: 20,
+                    textAlign: 'center'
+                  }}>
+                    {discrepanciesCount} assets flagged - discrepancy report generated automatically
+                  </div>
+                )}
+
+                {/* ── Close Audit Cycle Button ── */}
+                {selectedCycleDetail.status === 'ACTIVE' && ['ADMIN', 'ASSET_MANAGER'].includes(user!.role) && (
+                  <button 
+                    className="btn btn-secondary" 
+                    style={{ 
+                      padding: '10px 20px', 
+                      fontSize: '13px', 
+                      borderColor: 'var(--border-color)', 
+                      fontWeight: 600 
+                    }} 
+                    onClick={handleCloseAuditCycle}
+                  >
+                    Close audit cycle
+                  </button>
+                )}
 
               </div>
             ) : (

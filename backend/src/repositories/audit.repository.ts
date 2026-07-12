@@ -129,13 +129,28 @@ export class AuditRepository {
 
   static async findRecordsByCycleId(cycleId: string) {
     const sql = `
-      SELECT ar.*, 
-             a.name as asset_name, a.asset_tag, a.location as expected_location, a.status as asset_status,
-             u.name as auditor_name
-      FROM audit_records ar
-      JOIN assets a ON ar.asset_id = a.id
-      JOIN users u ON ar.auditor_id = u.id
-      WHERE ar.audit_cycle_id = $1
+      SELECT 
+        a.id as asset_id,
+        a.name as asset_name,
+        a.asset_tag,
+        a.location as expected_location,
+        a.status as asset_status,
+        ar.id as record_id,
+        ar.status as status,
+        ar.notes as notes,
+        ar.checked_at,
+        u.name as auditor_name
+      FROM assets a
+      CROSS JOIN (
+        SELECT ac.id, ac.scope_department_id, ac.scope_location
+        FROM audit_cycles ac
+        WHERE ac.id = $1
+      ) cycle
+      LEFT JOIN audit_records ar ON ar.asset_id = a.id AND ar.audit_cycle_id = cycle.id
+      LEFT JOIN users u ON ar.auditor_id = u.id
+      WHERE a.is_shared_bookable = FALSE
+        AND (cycle.scope_department_id IS NULL OR a.department_id = cycle.scope_department_id)
+        AND (cycle.scope_location IS NULL OR cycle.scope_location = '' OR a.location ILIKE '%' || cycle.scope_location || '%')
       ORDER BY a.asset_tag ASC
     `;
     const res = await query(sql, [cycleId]);
