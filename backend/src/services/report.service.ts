@@ -107,9 +107,24 @@ export class ReportService {
         (SELECT COUNT(*)::int FROM assets WHERE status = 'UNDER_MAINTENANCE') as assets_under_maintenance,
         (SELECT COUNT(*)::int FROM resource_bookings WHERE status = 'ONGOING') as active_bookings,
         (SELECT COUNT(*)::int FROM transfer_requests WHERE status = 'PENDING') as pending_transfers,
-        (SELECT COUNT(*)::int FROM asset_allocations WHERE status = 'OVERDUE') as overdue_returns
+        (SELECT COUNT(*)::int FROM asset_allocations WHERE status = 'OVERDUE') as overdue_returns,
+        (SELECT COUNT(*)::int FROM asset_allocations WHERE status = 'ACTIVE' AND expected_return_at > NOW() AND expected_return_at <= NOW() + INTERVAL '7 days') as upcoming_returns
     `;
     const kpiSummary = await query(kpiSql);
+
+    // 9b. Overdue Returns List
+    const overdueReturnsSql = `
+      SELECT al.id, al.allocated_at, al.expected_return_at, 
+             a.name as asset_name, a.asset_tag, 
+             u.name as user_name, d.name as department_name
+      FROM asset_allocations al
+      JOIN assets a ON al.asset_id = a.id
+      LEFT JOIN users u ON al.user_id = u.id
+      LEFT JOIN departments d ON al.department_id = d.id
+      WHERE al.status = 'OVERDUE'
+      ORDER BY al.expected_return_at ASC
+    `;
+    const overdueReturnsList = await query(overdueReturnsSql);
 
     return {
       kpi: kpiSummary.rows[0],
@@ -121,6 +136,7 @@ export class ReportService {
       retirementCandidates: retirementCandidates.rows,
       upcomingMaintenance: upcomingMaintenance.rows,
       recentActivity: recentActivity.rows,
+      overdueReturnsList: overdueReturnsList.rows,
     };
   }
 }
